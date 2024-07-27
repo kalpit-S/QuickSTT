@@ -119,15 +119,15 @@ def transcribe_audio(audio):
                     if clean_transcription_using_llm:
                         transcription = (
                             client.chat.completions.create(
-                                model="llama-3.1-8b-instant",
+                                model="llama-3.1-70b-versatile",
                                 messages=[
                                     {
                                         "role": "system",
-                                        "content": "please clean up the transcription, do your best to infer what the user said. Only respond with the cleaned up transcription, nothing else.",
+                                        "content": "please clean up the transcription, do your best to infer what the user said. Only respond with the cleaned up transcription, nothing else. Your job isn't to answer the user's question, but to clean up the transcription so that it can help the user type something out.",
                                     },
                                     {
                                         "role": "user",
-                                        "content": f"Transcription: {transcription}",
+                                        "content": f"please clean up the transcription, do your best to infer what the user said. Only respond with the cleaned up transcription, nothing else.\n Transcription: {transcription}",
                                     },
                                 ],
                             )
@@ -229,15 +229,13 @@ def stop_llm_recording():
                 print(f"LLM Response: {llm_response}")
                 pyperclip.copy(llm_response)
                 pyautogui.hotkey("ctrl", "v")
-                if auto_enter:
-                    pyautogui.press("enter")
 
     if record_thread and record_thread.is_alive():
         record_thread.join()
     backspace_done = False
 
 
-def generate_llm_response(client, input_text, prompt):
+def generate_llm_response(highlighted_text, transcription):
     try:
         messages = [
             {
@@ -246,7 +244,7 @@ def generate_llm_response(client, input_text, prompt):
             },
             {
                 "role": "user",
-                "content": f"Highlighted text:\n{input_text}\n\nUser prompt:\n{prompt}\n\nRespond to the prompt, using highlighted text as context if provided. Give a direct response without commentary. Address only the prompt if no highlighted text is given. Your response will be inserted into the user's application. Avoid formatting elements like backticks or quotes.",
+                "content": f"Highlighted text:\n{highlighted_text}\n\nUser prompt:\n{transcription}\n\nRespond to the prompt, using highlighted text as context if provided. Give a direct response without commentary. Address only the prompt if no highlighted text is given. Avoid formatting elements like backticks or quotes.",
             },
         ]
         if isinstance(client, Groq):
