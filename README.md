@@ -1,54 +1,114 @@
-# Setup
+# Voice Transcription and LLM Integration Tool
 
-Follow these steps to get the speech-to-text utility up and running:
+## Overview
 
-1. **Install Python 3.6 or Later**: Ensure Python 3.6+ is installed on your system.
-2. **Obtain an OpenAI API Key**: Sign up at OpenAI and obtain an API key. Edit `config.ini` in the project directory to include your API key:
+This is a Python-based tool that allows you to record audio, transcribe it into text, and optionally clean up the transcription using a Large Language Model (LLM) like Groq or OpenAI's API. The tool also integrates with your clipboard, allowing you to paste the transcription directly into your current application, with the option to trigger an LLM response based on highlighted text.
 
-   ```ini
-   [OpenAI]
-   api_key=your_api_key_here
+## Features
 
-   [Settings]
-   auto_enter=true
-   ```
+- **Audio Recording and Transcription**: Record audio from your microphone and convert it into text using either the Groq API or OpenAI API.
+- **LLM-Based Transcription Cleanup**: Optionally clean up the transcription using an LLM to improve readability and accuracy.
+- **Hotkey Integration**: Use customizable hotkeys to start and stop audio recording, as well as trigger LLM processing.
+- **Cross-Platform Compatibility**: Works on both Windows and macOS, with platform-specific adjustments for key mappings.
+- **Clipboard Integration**: Automatically copies the transcription to the clipboard and pastes it into the current application.
 
-3. **Install Required Dependencies**: Open your terminal or command prompt and run:
+## Requirements
+
+- Python 3.x
+- `numpy`
+- `sounddevice`
+- `pyautogui`
+- `pyperclip`
+- `pynput`
+- `groq` (if using Groq API)
+- `openai` (if using OpenAI API)
+
+## Installation
+
+1. **Clone the Repository**:
 
    ```bash
-   pip install sounddevice pynput numpy pyautogui openai
+   git clone https://github.com/your-repo/voice-transcription-tool.git
+   cd voice-transcription-tool
    ```
 
-# Usage
+2. **Install Dependencies**:
 
-To use the utility:
-
-- **Start**: Run `python stt.py` from within the project directory.
-- **Activate**: Hold the `End` key to begin recording. Release it to stop and transcribe your speech to text. (Highly recommend binding to a mouse button)
-
-# Configuration
-
-- To toggle automatic submission of transcribed text, adjust the `auto_enter` setting in `config.ini` to `true` (for auto-submit) or `false` (requires manual submission).
-
-# Customizing the Push-to-Talk Key
-
-The default key for activating recording is `End`. To change it:
-
-1. **Identify the New Key**: Consult the [pynput keyboard documentation](https://pynput.readthedocs.io/en/latest/keyboard.html#pynput.keyboard.Key) for key names.
-2. **Edit the Script**: Open `speech_to_text.py` in a text editor.
-3. **Find the Key Check**: In `on_press` and `on_release` functions, locate `keyboard.Key.end`.
-4. **Replace the Key**: Change `keyboard.Key.end` to your chosen key, e.g., `keyboard.Key.f12` for the F12 key.
-
-   ```python
-   def on_press(key):
-       global start_time, record_thread
-       if key == keyboard.Key.f12:  # Change to your chosen key
-           # Function code remains unchanged
-
-   def on_release(key):
-       global record_thread
-       if key == keyboard.Key.f12:  # Change to your chosen key
-           # Function code remains unchanged
+   ```bash
+   pip install -r requirements.txt
    ```
 
-5. **Save Changes**: After editing, save the file and rerun the script to test the new key configuration.
+3. **Configuration**:
+   Create a `config.ini` file in the root directory of the project and fill in your API keys and settings as needed. You only need to provide one API key, either for Groq or OpenAI. Here's an example configuration:
+
+   ```ini
+   [Groq]
+   api_key = your_groq_api_key_here
+
+   [OpenAI]
+   api_key = your_openai_api_key_here
+
+   [Settings]
+   auto_enter = true
+   clean_transcription_using_llm = false
+
+   [Hotkeys]
+   start_recording = f15
+   use_llm = f14
+   ```
+
+   **Note**: If you have both API keys, the tool will prioritize using the Groq API.
+
+## Usage
+
+1. **Run the Script**:
+
+   ```bash
+   python main.py
+   ```
+
+2. **Recording and Transcription**:
+
+   - Press and hold the `start_recording` hotkey (default: `F15`) to start recording.
+   - Release the hotkey to stop recording and transcribe the audio.
+
+3. **LLM Processing**:
+
+   - Highlight some text in your application.
+   - Press and hold the `use_llm` hotkey (default: `F14`) to start recording and trigger the LLM processing.
+   - The LLM will generate a response based on the highlighted text and transcription.
+
+4. **Automatic Pasting**:
+   - After transcription, the text will be copied to your clipboard and automatically pasted into your active application. If `auto_enter` is enabled, it will also press `Enter` to submit the text.
+
+## Platform-Specific Notes
+
+- **macOS**:
+
+  - The tool automatically adjusts key mappings and clipboard shortcuts for macOS.
+  - Ensure the application has microphone and accessibility permissions in System Preferences.
+
+- **Windows**:
+  - No additional setup is required.
+
+## Troubleshooting
+
+- **Configuration File Not Found**: Ensure that `config.ini` is in the root directory of your project and is correctly formatted.
+- **Microphone Access**: On macOS, you may need to manually grant microphone access in System Preferences.
+- **Hotkey Issues**: If the hotkeys don't work as expected, ensure the correct key names are used in the `config.ini` file, and adjust for your platform if necessary.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+## Contributing
+
+If you'd like to contribute, please fork the repository and use a feature branch. Pull requests are warmly welcome.
+
+## Contact
+
+For any issues or suggestions, feel free to open an issue on the GitHub repository or contact the maintainer at your.email@example.com.
+
+---
+
+This README provides the necessary information to get started with the tool, including installation instructions, usage guidance, and platform-specific notes. It also covers the requirement that only one API key (either Groq or OpenAI) is necessary.

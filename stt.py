@@ -13,6 +13,8 @@ from groq import Groq
 from openai import OpenAI
 import configparser
 import logging
+import platform
+
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +40,9 @@ clean_transcription_using_llm = config.getboolean(
 )
 start_key = config.get("Hotkeys", "start_recording", fallback="f14")
 use_llm_key = config.get("Hotkeys", "use_llm", fallback="f15")
+copy_paste_key = "ctrl"
+if platform.system() == "Darwin":
+    copy_paste_key = "cmd"
 
 # Initialize client
 client = None
@@ -110,7 +115,7 @@ def transcribe_audio(audio):
                 if isinstance(client, Groq):
                     transcription = client.audio.transcriptions.create(
                         file=(tmpfile.name, f.read()),
-                        model="whisper-large-v3",
+                        model="distil-whisper-large-v3-en",
                         response_format="text",
                         language="en",
                         temperature=0.0,
