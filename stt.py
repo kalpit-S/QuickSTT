@@ -116,9 +116,7 @@ def transcribe_audio(audio):
             transcription = client.audio.transcriptions.create(
                 file=f,
                 model=(
-                    "whisper-1"
-                    if isinstance(client, OpenAI)
-                    else "distil-whisper-large-v3-en"
+                    "whisper-1" if isinstance(client, OpenAI) else "whisper-large-v3"
                 ),
                 response_format="text",
                 language="en",
@@ -142,15 +140,11 @@ def transcribe_audio(audio):
 def clean_transcription(transcription):
     try:
         response = client.chat.completions.create(
-            model=(
-                "gpt-4o-mini"
-                if isinstance(client, OpenAI)
-                else "llama-3.1-70b-versatile"
-            ),
+            model=("gpt-4o-mini" if isinstance(client, OpenAI) else "llama3-70b-8192"),
             messages=[
                 {
                     "role": "system",
-                    "content": "Clean up the transcription, inferring the user's intent.",
+                    "content": "Clean up the whisper transcription, inferring the user's intent while staying faithful to the original text.",
                 },
                 {"role": "user", "content": f"Transcription: {transcription}"},
             ],
@@ -236,20 +230,16 @@ def generate_llm_response(highlighted_text, transcription):
         messages = [
             {
                 "role": "system",
-                "content": "Respond to the prompt, using highlighted text as context if provided.",
+                "content": "You are an AI assistant responding to user prompts within their current application. Provide relevant, tailored responses that can be directly inserted into the user's active application.",
             },
             {
                 "role": "user",
-                "content": f"Highlighted text:\n{highlighted_text}\n\nUser prompt:\n{transcription}",
+                "content": f"Highlighted text:\n{highlighted_text}\n\nUser prompt:\n{transcription}\n\nRespond to the prompt, using highlighted text as context if provided. Give a direct response without commentary. Address only the prompt if no highlighted text is given. Avoid formatting elements like backticks or quotes.",
             },
         ]
         response = client.chat.completions.create(
             messages=messages,
-            model=(
-                "gpt-4o-mini"
-                if isinstance(client, OpenAI)
-                else "llama-3.1-70b-versatile"
-            ),
+            model=("gpt-4o-mini" if isinstance(client, OpenAI) else "llama3-70b-8192"),
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
