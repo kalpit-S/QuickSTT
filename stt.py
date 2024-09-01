@@ -225,26 +225,77 @@ def get_highlighted_text():
     return new_clipboard if new_clipboard != previous_clipboard else ""
 
 
+conversation_history = []
+
+
 def generate_llm_response(highlighted_text, transcription):
+    global conversation_history
+
     try:
-        messages = [
-            {
-                "role": "system",
-                "content": "You are an AI assistant responding to user prompts within their current application. Provide relevant, tailored responses that can be directly inserted into the user's active application.",
-            },
-            {
-                "role": "user",
-                "content": f"Highlighted text:\n{highlighted_text}\n\nUser prompt:\n{transcription}\n\nRespond to the prompt, using highlighted text as context if provided. Give a direct response without commentary. Address only the prompt if no highlighted text is given. Avoid formatting elements like backticks or quotes.",
-            },
-        ]
+        # Prepare the new message, handling empty inputs
+        user_content = ""
+        if highlighted_text:
+            user_content += f"Highlighted text: {highlighted_text}\n\n"
+        if transcription:
+            user_content += f"User prompt: {transcription}"
+
+        if not user_content:
+            user_content = "No input provided."
+
+        new_user_message = {"role": "user", "content": user_content.strip()}
+
+        # Add the new message to the conversation history
+        conversation_history.append(new_user_message)
+
+        # Keep only the last 10 messages to maintain context without overwhelming the model
+        conversation_history = conversation_history[-10:]
+
+        # Prepare the messages for the API call
+        messages = (
+            [
+                {
+                    "role": "system",
+                    "content": """You are an AI assistant that helps users modify text directly within their current application. Your responses should be the modified text that can be directly pasted into the user's document. Follow these guidelines:
+
+1. If given highlighted text and a task, modify the highlighted text according to the task.
+2. If only given a task without highlighted text, provide a brief, direct response to the task.
+3. For code-related tasks, include the entire modified code, not just the changes.
+4. For text improvement tasks (grammar, spelling, etc.), provide the full corrected text.
+5. Do not use backticks, quotes, or any other formatting in your response.
+6. Do not include any explanations, comments, or anything other than the modified text or direct answer.
+7. If the task is unclear, ask for clarification in a concise manner.
+""",
+                }
+            ]
+            + conversation_history
+        )
+
+        # logging.info(f"Sending the following messages to the LLM: {messages}")
+
         response = client.chat.completions.create(
             messages=messages,
-            model=("gpt-4o-mini" if isinstance(client, OpenAI) else "llama3-70b-8192"),
+            model=(
+                "gpt-4o-mini"
+                if isinstance(client, OpenAI)
+                else "llama-3.1-70b-versatile"
+            ),
+            temperature=0.7,
+            max_tokens=150,
         )
-        return response.choices[0].message.content.strip()
+
+        assistant_response = response.choices[0].message.content.strip()
+
+        # Add the assistant's response to the conversation history
+        conversation_history.append(
+            {"role": "assistant", "content": assistant_response}
+        )
+
+        # logging.info(f"Updated conversation history: {conversation_history}")
+
+        return assistant_response
     except Exception as e:
         logging.error(f"Failed to generate LLM response: {str(e)}")
-        return ""
+        return "I apologize, but I encountered an error while processing your request. Please try again."
 
 
 def on_press(key):
